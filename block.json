@@ -1,0 +1,36 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "giant-tile-slider/tile-slider",
+	"version": "1.0.0",
+	"title": "Giant Tile Slider",
+	"category": "widgets",
+	"icon": "grid-view",
+	"description": "A tile-based slider with progress bar, custom colours, and CPT or manual tile support.",
+	"keywords": [ "tile", "slider", "carousel", "sectors", "cards" ],
+	"textdomain": "giant-tile-slider",
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ]
+	},
+	"attributes": {
+		"source":         { "type": "string",  "default": "manual" },
+		"tiles":          { "type": "array",   "default": [], "items": { "type": "object" } },
+		"heading":        { "type": "string",  "default": "" },
+		"subheading":     { "type": "string",  "default": "" },
+		"headingColor":   { "type": "string",  "default": "#0082C9" },
+		"subheadingColor":{ "type": "string",  "default": "#ffffff" },
+		"bgColor":        { "type": "string",  "default": "#1a2d5a" },
+		"progressColor":  { "type": "string",  "default": "#0082C9" },
+		"arrowStyle":     { "type": "string",  "default": "angle" },
+		"speed":          { "type": "number",  "default": 500 },
+		"animation":      { "type": "string",  "default": "slide" },
+		"tilesPerView":   { "type": "number",  "default": 4 },
+		"readMoreLabel":  { "type": "string",  "default": "Read More" },
+		"readMoreColor":  { "type": "string",  "default": "#0082C9" }
+	},
+	"editorScript": "file:./build/index.js",
+	"editorStyle":  "file:./build/index.css",
+	"style":        "file:./build/style-index.css",
+	"viewScript":   "file:./build/frontend.js"
+}

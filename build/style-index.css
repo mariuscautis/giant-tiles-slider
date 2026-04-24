@@ -1,0 +1,180 @@
+/* Giant Tile Slider — frontend styles */
+
+.giant-tile-slider {
+	display: block;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 48px 0 48px;
+}
+
+.gts-inner {
+	max-width: 1280px;
+	margin: 0 auto;
+	/* padding: 0 40px; */
+	box-sizing: border-box;
+}
+.giant-tile-slider h2,
+.giant-tile-slider p{
+	padding: 0px 30px;
+}
+/* Heading & subheading */
+.gts-heading {
+	margin: 0 0 8px;
+	font-size: clamp(22px, 3vw, 34px);
+	font-weight: 700;
+	line-height: 1.2;
+}
+
+.gts-subheading {
+	margin: 0 0 32px;
+	font-size: clamp(14px, 1.6vw, 18px);
+	font-weight: 600;
+	line-height: 1.5;
+}
+
+/* Slider wrapper */
+.gts-slider-wrap {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+/* Viewport clips the track */
+.gts-viewport {
+	flex: 1;
+	overflow: hidden;
+	cursor: grab;
+}
+.gts-viewport:active {
+	cursor: grabbing;
+}
+
+/* Track — flex row, no wrap */
+.gts-track {
+	display: flex;
+	flex-wrap: nowrap;
+	will-change: transform;
+}
+
+/* Individual tile */
+.gts-tile {
+	flex-shrink: 0;
+	box-sizing: border-box;
+}
+
+.gts-tile-inner {
+	background: #ffffff;
+	border-radius: 10px;
+	padding: 28px 24px;
+	height: 100%;
+	min-height: 190px;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.gts-tile-title {
+	margin: 0;
+	font-size: clamp(18px, 2vw, 24px);
+	font-weight: 700;
+	color: #1a2d5a;
+	line-height: 1.3;
+}
+
+.gts-read-more {
+	display: inline-block;
+	margin-top: 20px;
+	font-size: 15px;
+	font-weight: 700;
+	text-decoration: none;
+	transition: opacity 0.2s;
+}
+.gts-read-more:hover {
+	opacity: 0.75;
+}
+
+/* Navigation arrows — colour set via JS from headingColor */
+.gts-arrow {
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 8px;
+	/* color inherited from JS */
+	opacity: 0.85;
+	transition: opacity 0.2s;
+	flex-shrink: 0;
+	line-height: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.gts-arrow:hover {
+	opacity: 1;
+}
+.gts-arrow:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+/* Progress bar — thin white line, coloured thumb slides along it */
+.gts-progress-wrap {
+	margin-top: 32px;
+	padding: 0 40px;
+}
+
+.gts-progress-track {
+	position: relative;
+	height: 4px;
+	background: rgba(255, 255, 255, 0.35);
+	border-radius: 2px;
+	/* no overflow:hidden — thumb must slide beyond the fill */
+}
+
+.gts-progress-bar {
+position: absolute;
+    left: 10px;
+    top: -4px;
+    transform: translateY(-50%);
+    height: 14px;
+    width: 80px;
+    border-radius: 6px;
+    transition: transform 0.35s ease;
+    will-change: transform;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+	.gts-inner {
+		/* padding: 0 24px; */
+	}
+	.gts-progress-wrap {
+		/* padding: 0 24px; */
+	}
+}
+
+@media (max-width: 768px) {
+	.giant-tile-slider {
+		padding: 36px 0;
+	}
+	.gts-inner {
+		padding: 0 16px;
+	}
+	.gts-progress-wrap {
+		padding: 0 16px;
+	}
+	.gts-tile-inner {
+		min-height: 160px;
+		padding: 20px 16px;
+	}
+}
+
+@media (max-width: 480px) {
+	.gts-arrow {
+		padding: 4px;
+	}
+	.gts-tile-inner {
+		min-height: 140px;
+	}
+}
