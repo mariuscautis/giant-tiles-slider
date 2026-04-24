@@ -41,35 +41,24 @@
 			var tw      = ( vw - gap * ( visible - 1 ) ) / visible;
 
 			[].forEach.call( tiles, function ( tile ) {
-				tile.style.width    = tw + 'px';
+				tile.style.width      = tw + 'px';
 				tile.style.flexShrink = '0';
+				tile.style.position   = '';
+				tile.style.top        = '';
+				tile.style.left       = '';
+				tile.style.zIndex     = '';
+				tile.style.opacity    = '';
+				tile.style.transition = '';
 			} );
 
-			track.style.gap = gap + 'px';
+			track.style.gap        = gap + 'px';
+			track.style.position   = '';
+			track.style.height     = '';
+			track.style.transition = '';
+			track.style.opacity    = '';
+			track.style.transform  = '';
 
-			if ( animation === 'fade' ) {
-				track.style.position = 'relative';
-				[].forEach.call( tiles, function( tile, i ) {
-					tile.style.position   = 'absolute';
-					tile.style.top        = '0';
-					tile.style.left       = '0';
-					tile.style.opacity    = i === current ? '1' : '0';
-					tile.style.transition = 'opacity ' + speed + 'ms ease';
-					tile.style.width      = '100%';
-					tile.style.zIndex     = i === current ? '1' : '0';
-				} );
-				track.style.height = tiles[ 0 ].offsetHeight + 'px';
-			} else {
-				[].forEach.call( tiles, function( tile ) {
-					tile.style.position   = '';
-					tile.style.top        = '';
-					tile.style.left       = '';
-					tile.style.opacity    = '';
-					tile.style.zIndex     = '';
-					tile.style.transition = '';
-				} );
-				slideTo( current, false );
-			}
+			slideTo( current, false );
 
 			updateProgress();
 			updateArrows();
@@ -82,19 +71,31 @@
 			idx = Math.max( 0, Math.min( idx, max ) );
 			current = idx;
 
-			if ( animation === 'fade' ) {
-				[].forEach.call( tiles, function( tile, i ) {
-					tile.style.opacity = ( i >= idx && i < idx + visible ) ? '1' : '0';
-					tile.style.zIndex  = ( i >= idx && i < idx + visible ) ? '1' : '0';
-				} );
-				track.style.height = tiles[ idx ].offsetHeight + 'px';
-			} else {
-				var gap   = 20;
-				var vw    = viewport.offsetWidth;
-				var tw    = ( vw - gap * ( visible - 1 ) ) / visible;
-				var shift = idx * ( tw + gap );
+			var gap   = 20;
+			var vw    = viewport.offsetWidth;
+			var tw    = ( vw - gap * ( visible - 1 ) ) / visible;
+			var shift = idx * ( tw + gap );
 
+			if ( animation === 'fade' ) {
+				if ( animate === false ) {
+					track.style.transition = 'none';
+					track.style.transform  = 'translateX(-' + shift + 'px)';
+				} else {
+					// Fade the track out, snap position, fade back in
+					track.style.transition = 'opacity ' + ( speed / 2 ) + 'ms ease';
+					track.style.opacity    = '0';
+					setTimeout( function() {
+						track.style.transition = 'none';
+						track.style.transform  = 'translateX(-' + shift + 'px)';
+						// Force reflow so the transition re-applies cleanly
+						void track.offsetWidth;
+						track.style.transition = 'opacity ' + ( speed / 2 ) + 'ms ease';
+						track.style.opacity    = '1';
+					}, speed / 2 );
+				}
+			} else {
 				track.style.transition = animate === false ? 'none' : 'transform ' + speed + 'ms ease';
+				track.style.opacity    = '';
 				track.style.transform  = 'translateX(-' + shift + 'px)';
 			}
 
