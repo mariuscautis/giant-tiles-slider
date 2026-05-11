@@ -14,6 +14,7 @@
 
 	var useBlockProps     = wp.blockEditor.useBlockProps;
 	var InspectorControls = wp.blockEditor.InspectorControls;
+	var useSettings       = wp.blockEditor.useSettings;
 
 	var PanelBody     = wp.components.PanelBody;
 	var PanelRow      = wp.components.PanelRow;
@@ -23,39 +24,59 @@
 	var ToggleControl = wp.components.ToggleControl;
 	var Button        = wp.components.Button;
 	var ColorPicker   = wp.components.ColorPicker;
-	var Popover       = wp.components.Popover;
+	var ColorPalette  = wp.components.ColorPalette;
 
 	var registerBlockType = wp.blocks.registerBlockType;
 
-	/* ── tiny colour-swatch button ───────────────────────────── */
-	function ColourField( props ) {
-		var label = props.label;
-		var value = props.value;
-		var onChange = props.onChange;
-		var open = useState( false );
-		var isOpen = open[0];
-		var setOpen = open[1];
+	/* ── Colour field: theme palette swatches + custom picker ── */
+	var CHECKERBOARD = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'8\' height=\'8\'%3E%3Crect width=\'4\' height=\'4\' fill=\'%23ccc\'/%3E%3Crect x=\'4\' y=\'4\' width=\'4\' height=\'4\' fill=\'%23ccc\'/%3E%3C/svg%3E")';
 
-		return el( 'div', { style: { marginBottom: '12px' } },
-			el( 'div', { style: { fontSize: '11px', fontWeight: '500', marginBottom: '4px', textTransform: 'uppercase', color: '#757575' } }, label ),
-			el( 'button', {
-				onClick: function() { setOpen( ! isOpen ); },
-				style: {
-					display: 'flex', alignItems: 'center', gap: '8px',
-					background: '#fff', border: '1px solid #ccc', borderRadius: '4px',
-					padding: '4px 10px', cursor: 'pointer', fontSize: '13px',
-				}
-			},
-				el( 'span', { style: { display: 'inline-block', width: '20px', height: '20px', borderRadius: '3px', background: value, border: '1px solid rgba(0,0,0,0.15)', flexShrink: 0 } } ),
-				value
+	function ColourField( props ) {
+		var settingsResult = useSettings( 'color.palette' );
+		var rawPalette     = ( settingsResult && settingsResult[0] ) || [];
+		var themePalette   = [];
+		rawPalette.forEach( function( entry ) {
+			if ( entry && typeof entry === 'object' && entry.color ) {
+				themePalette.push( entry );
+			}
+		} );
+		var hasPalette = themePalette.length > 0;
+
+		var customState   = useState( ! hasPalette );
+		var showCustom    = customState[0];
+		var setShowCustom = customState[1];
+
+		var isNone = ! props.value;
+		var swatchStyle = {
+			display: 'inline-block', width: 18, height: 18, borderRadius: 2,
+			border: '1px solid rgba(0,0,0,0.15)', flexShrink: 0,
+			background: isNone ? CHECKERBOARD + ', #fff' : props.value,
+		};
+
+		return el( 'div', { style: { marginBottom: 16 } },
+			el( 'p', { style: { fontSize: 11, fontWeight: 600, textTransform: 'uppercase', marginBottom: 8, color: '#757575' } }, props.label ),
+			el( 'div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 } },
+				el( 'span', { style: swatchStyle } ),
+				el( 'span', { style: { fontSize: 12, color: '#444' } }, isNone ? 'None' : props.value )
 			),
-			isOpen && el( Popover, { onClose: function() { setOpen( false ); }, placement: 'bottom-start' },
-				el( 'div', { style: { padding: '8px' } },
-					el( ColorPicker, {
-						color: value,
-						onChange: function( c ) { onChange( c ); },
-					} )
-				)
+			hasPalette && el( ColorPalette, {
+				colors:              themePalette,
+				value:               props.value || '',
+				onChange: function( v ) { props.onChange( v || '' ); setShowCustom( false ); },
+				disableCustomColors: true,
+				clearable:           true,
+			} ),
+			el( 'button', {
+				type:    'button',
+				onClick: function() { setShowCustom( ! showCustom ); },
+				style:   { fontSize: 12, color: '#1a9ad6', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textDecoration: 'underline', display: 'block', marginTop: 4 },
+			}, showCustom ? 'Hide custom colour' : 'Custom colour…' ),
+			showCustom && el( 'div', { style: { marginTop: 8, border: '1px solid #e0e0e0', borderRadius: 4, overflow: 'hidden' } },
+				el( ColorPicker, {
+					color:       props.value || '#ffffff',
+					enableAlpha: true,
+					onChange:    function( v ) { props.onChange( v ); },
+				} )
 			)
 		);
 	}
@@ -198,13 +219,27 @@
 			var cptTiles  = useState( [] );
 			var cptData   = cptTiles[0];
 			var setCptData = cptTiles[1];
+			var postTypes = useState( [] );
+			var postTypeOptions = postTypes[0];
+			var setPostTypeOptions = postTypes[1];
 
+			// Fetch available public post types once when CPT mode is first used.
 			useEffect( function() {
 				if ( attrs.source !== 'cpt' ) return;
-				wp.apiFetch( { path: '/giant-tile-slider/v1/tiles' } )
-					.then( function( data ) { setCptData( data ); } )
+				if ( postTypeOptions.length > 0 ) return;
+				wp.apiFetch( { path: '/giant-tile-slider/v1/post-types' } )
+					.then( function( data ) { setPostTypeOptions( data ); } )
 					.catch( function() {} );
 			}, [ attrs.source ] );
+
+			// Fetch posts whenever source is CPT or the chosen post type changes.
+			useEffect( function() {
+				if ( attrs.source !== 'cpt' ) return;
+				var pt = attrs.cptType || 'giant_tile';
+				wp.apiFetch( { path: '/giant-tile-slider/v1/tiles?post_type=' + encodeURIComponent( pt ) } )
+					.then( function( data ) { setCptData( data ); } )
+					.catch( function() {} );
+			}, [ attrs.source, attrs.cptType ] );
 
 			var blockProps = useBlockProps();
 
@@ -217,10 +252,18 @@
 							label: __( 'Tile Source', 'giant-tile-slider' ),
 							value: attrs.source,
 							options: [
-								{ label: __( 'Manual', 'giant-tile-slider' ),            value: 'manual' },
-								{ label: __( 'Custom Post Type (Tiles)', 'giant-tile-slider' ), value: 'cpt' },
+								{ label: __( 'Manual', 'giant-tile-slider' ),       value: 'manual' },
+								{ label: __( 'Custom Post Type', 'giant-tile-slider' ), value: 'cpt' },
 							],
 							onChange: function( v ) { setAttrs( { source: v } ); },
+						} ),
+						attrs.source === 'cpt' && el( SelectControl, {
+							label: __( 'Post Type', 'giant-tile-slider' ),
+							value: attrs.cptType || 'giant_tile',
+							options: postTypeOptions.length > 0
+								? postTypeOptions
+								: [ { label: __( 'Loading…', 'giant-tile-slider' ), value: attrs.cptType || 'giant_tile' } ],
+							onChange: function( v ) { setAttrs( { cptType: v } ); },
 						} ),
 						el( TextControl, {
 							label: __( 'Heading', 'giant-tile-slider' ),
@@ -247,10 +290,10 @@
 							)
 						),
 						attrs.source === 'cpt' && cptData.length === 0 && el( 'p', { style: { color: '#888', fontSize: '12px', margin: 0 } },
-							__( 'No published Tiles found. Add some via Tiles → Add New.', 'giant-tile-slider' )
+							__( 'No published posts found for this post type.', 'giant-tile-slider' )
 						),
 						attrs.source === 'cpt' && cptData.length > 0 && el( 'p', { style: { color: '#555', fontSize: '12px', margin: 0 } },
-							cptData.length + __( ' tile(s) found.', 'giant-tile-slider' )
+							cptData.length + __( ' post(s) found.', 'giant-tile-slider' )
 						)
 					),
 
